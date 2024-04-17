@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 @Entity
-public class Order implements Serializable {
+public class TacoOrder implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

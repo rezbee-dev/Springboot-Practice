@@ -2,52 +2,40 @@ package com.example.restservice.controllers;
 
 import com.example.restservice.models.Ingredient;
 import com.example.restservice.models.Ingredient.Type;
-import com.example.restservice.models.Order;
+import com.example.restservice.models.TacoOrder;
 import com.example.restservice.models.Taco;
+import com.example.restservice.repos.IngredientRepository;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
-// prefix routes associated with this controller with /design
 @RequestMapping("/design")
-// Used to store model attributes in HTTP Servlet Session b/w requests
-//   - In this case, model attribute with name `order` will be saved in HTTP servlet session, until another controller method uses SessionStatus.setComplete()
-@SessionAttributes("order")
+@SessionAttributes("tacoOrder")
 public class DesignTacoController {
 
     Logger logger = LoggerFactory.getLogger(DesignTacoController.class);
+    private final IngredientRepository ingredientRepository;
+
+    @Autowired
+    public DesignTacoController(IngredientRepository ingredientRepository){
+        this.ingredientRepository = ingredientRepository;
+    }
 
 
-    // Initialize servlet model with ingredients to make it accessible by our view
-    //   runs before request is handled, and view is returned
-    //   ingredients are categorized by their types
-    //   Model
-    //   - object that ferries data b/w controller and view
-    //   - data is placed in Model's attributes and then copied into servlet request attributes
     @ModelAttribute
     public void addIngredientsToModel(Model model) {
-        // Note: this data would've normally be loaded from database
-        List<Ingredient> ingredients = Arrays.asList(
-                new Ingredient("FLTO", "Flour Tortilla", Type.WRAP),
-                new Ingredient("COTO", "Corn Tortilla", Type.WRAP),
-                new Ingredient("GRBF", "Ground Beef", Type.PROTEIN),
-                new Ingredient("CARN", "Carnitas", Type.PROTEIN),
-                new Ingredient("TMTO", "Diced Tomatoes", Type.VEGGIES),
-                new Ingredient("LETC", "Lettuce", Type.VEGGIES),
-                new Ingredient("CHED", "Cheddar", Type.CHEESE),
-                new Ingredient("JACK", "Monterrey Jack", Type.CHEESE),
-                new Ingredient("SLSA", "Salsa", Type.SAUCE),
-                new Ingredient("SRCR", "Sour Cream", Type.SAUCE)
-        );
+        List<Ingredient> ingredients = new ArrayList<>();
+        this.ingredientRepository.findAll().forEach(ingredients::add); // query all ingredients, and add each to list
 
         for(Type type: Ingredient.Type.values()) {
             model.addAttribute(type.toString().toLowerCase(), this.filterByType(ingredients, type));
@@ -58,14 +46,14 @@ public class DesignTacoController {
     private Iterable<Ingredient> filterByType(List<Ingredient> ingredients, Type type) {
         return ingredients
                 .stream()
-                .filter(x -> x.type().equals(type))
+                .filter(x -> x.getType().equals(type))
                 .collect(Collectors.toList());
     }
 
     // Initializing order and taco key,values in model
-    @ModelAttribute(name = "order")
-    public Order order() {
-        return new Order();
+    @ModelAttribute(name = "tacoOrder")
+    public TacoOrder order() {
+        return new TacoOrder();
     }
 
     @ModelAttribute(name = "taco")
@@ -84,13 +72,13 @@ public class DesignTacoController {
     //   - since its annotated as @Component, Spring automatically discovers it and registers it with Spring MVC to be used when conversion of req params are needed
     // @Valid = to enable JavaBean Validation; validation occurs before this method is invoked
     //   - Errors will contain validation errors
-    public String processTaco(@Valid Taco taco, Errors error, @ModelAttribute Order order) {
+    public String processTaco(@Valid Taco taco, Errors error, @ModelAttribute TacoOrder tacoOrder) {
 
         if(error.hasErrors()) {
             return "design";
         }
 
-        order.addTaco(taco);
+        tacoOrder.addTaco(taco);
         // see OrderController
         return "redirect:/orders/current";
     }
