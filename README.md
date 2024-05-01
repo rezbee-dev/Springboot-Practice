@@ -20,3 +20,13 @@ Project for learning Springboot
   - No specific roles or authorities are required
   - Authentication is prompted with a simple login page
   - There's only one user (`user`)
+- Password encoders
+  - `StandardPasswordEncoder` - deprecated 
+  - `NoOpPasswordEncoder` - no encryption; good for testing 
+- User Store
+  - This allows you to add more than one user for authentication
+  - Requires bean that implements `UserDetailsService` interface method `loadUserByUsername(String Username) throws UsernameNotFoundException`
+  - in-memory user store
+    - good for testing/ dev
+    - Requires application to be redeployed to add new users
+    - See `config.Webconfig` for an example
